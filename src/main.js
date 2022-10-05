@@ -1,6 +1,6 @@
-import * as THREE from 'modules/three.module.js';
-import { OrbitControls } from 'modules/OrbitControls.js';
-import Stats from 'modules/stats.module.js';
+import * as THREE from 'three';
+import { OrbitControls } from 'OrbitControls';
+import Stats from 'stats';
 
 console.log("Create the scene");
 var scene = new THREE.Scene();

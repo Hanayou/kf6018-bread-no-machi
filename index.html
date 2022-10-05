@@ -1,6 +1,8 @@
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html" charset="utf-8" />
+        <!-- TODO: Repalce icon with copyright free version -->
+        <link rel="icon" href="corgi_icon.png">
         <title>
             kF6018 - ブレッドの町
         </title>
@@ -9,9 +11,20 @@
             body { margin: 0; }
             canvas { width: 100%; height: 100% }
         </style>
+
+        <script type="importmap">
+            {
+                "imports": {
+                    "three": "./vendor/three/build/three.module.js",
+                    "OrbitControls": "./vendor/three/examples/jsm/controls/OrbitControls.js",
+                    "stats": "./vendor/three/examples/jsm/libs/stats.module.js"
+                }
+            }
+        </script>
     </head>
 
     <body>
-        <script type="module" src="main.js"></script>
+        
+        <script type="module" src="src/main.js"></script>
     </body> 
 </html>
