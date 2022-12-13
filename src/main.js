@@ -5,8 +5,8 @@ import Stats from 'stats';
 // Scene Initialisation
 console.log("Create the scene");
 const scene = new THREE.Scene();
-scene.background = new THREE.Color( 0xffffff );
-scene.fog = new THREE.Fog( 0xffffff, 0, 750 );
+scene.background = new THREE.Color( 0xffff );
+scene.fog = new THREE.Fog( 0xffff00, 0, 250 );
 
 // Camera Initialisation
 console.log("Create the camera");
@@ -30,6 +30,8 @@ let moveForward = false;
 let moveBackward = false;
 let moveLeft = false;
 let moveRight = false;
+let moveUp = false;
+let moveDown = false;
 let cameraForwardVector = new THREE.Vector3();
 let cameraRightVector = new THREE.Vector3();
 let movementSpeed = 10.0;
@@ -71,6 +73,12 @@ const onKeyDown = function ( event ) {
         case 'KeyD':
             moveRight = true;
             break;
+        case 'KeyQ':
+            moveUp = true;
+            break;
+        case 'KeyE':
+            moveDown = true;
+            break;
     }
 };
 const onKeyUp = function ( event ) {
@@ -86,6 +94,12 @@ const onKeyUp = function ( event ) {
             break;
         case 'KeyD':
             moveRight = false;
+            break;
+        case 'KeyQ':
+            moveUp = false;
+            break;
+        case 'KeyE':
+            moveDown = false;
             break;
     }
 };
@@ -133,17 +147,21 @@ function onWindowResize() {
 }
 
 let globalUpVector = new THREE.Vector3(0, 1, 0);
+let GlobalUpMovement = new THREE.Vector3(0, 0, 0);
 function updateMovement(deltaTime) {
     if (controls.isLocked === true) {
         camera.getWorldDirection(cameraForwardVector);
         cameraRightVector.crossVectors(cameraForwardVector.normalize(), globalUpVector);
         cameraForwardVector = cameraForwardVector.normalize().multiplyScalar(movementSpeed).multiplyScalar(deltaTime);
         cameraRightVector = cameraRightVector.normalize().multiplyScalar(movementSpeed).multiplyScalar(deltaTime);
-        
+        GlobalUpMovement = globalUpVector.normalize().multiplyScalar(movementSpeed).multiplyScalar(deltaTime);
+
         if (moveForward) camera.position.add(cameraForwardVector);
         if (moveBackward) camera.position.sub(cameraForwardVector);
         if (moveRight) camera.position.add(cameraRightVector);
         if (moveLeft) camera.position.sub(cameraRightVector);
+        if (moveUp) camera.position.add(GlobalUpMovement);
+        if (moveDown) camera.position.sub(GlobalUpMovement);
     }
 }
 
