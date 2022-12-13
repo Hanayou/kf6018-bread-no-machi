@@ -32,7 +32,7 @@ let moveLeft = false;
 let moveRight = false;
 let cameraForwardVector = new THREE.Vector3();
 let cameraRightVector = new THREE.Vector3();
-let movementSpeed = 5.0;
+let movementSpeed = 10.0;
 
 const blocker = document.getElementById( 'blocker' );
 const instructions = document.getElementById( 'instructions' );
@@ -91,6 +91,10 @@ const onKeyUp = function ( event ) {
 };
 document.addEventListener( 'keydown', onKeyDown );
 document.addEventListener( 'keyup', onKeyUp );
+document.addEventListener('wheel', event => {
+    if (movementSpeed >= 1) movementSpeed += Math.sign(-event.deltaY);
+    if (movementSpeed <= 0) movementSpeed = 1;
+});
 
 // Clock Initialisation
 var clock = new THREE.Clock();
