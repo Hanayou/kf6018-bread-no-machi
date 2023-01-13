@@ -257,6 +257,18 @@ loader.load(
         scene.add(gltf.scene);
     }
 );
+loader.load(
+    './src/assets/models/starry.glb', // Load Steps
+     function(gltf) {
+        gltf.scene.traverse( function( child ) {
+            if ( child.isMesh ) { 
+                child.castShadow = true;
+                child.material.emissiveIntensity = 10;
+            }
+        });
+        scene.add(gltf.scene);
+    }
+);
 
 // Lake (with water shader)
 const waterGeometry = new THREE.PlaneGeometry(18.6, 50);
@@ -282,7 +294,7 @@ function animate()
     // Set deltaTime
     const deltaTime = clock.getDelta();
     updateMovement(deltaTime);
-
+    
     stats.update();
 
     renderer.render(scene, camera);
