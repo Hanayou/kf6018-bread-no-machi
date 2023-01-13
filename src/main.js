@@ -1,17 +1,18 @@
 import * as THREE from 'three';
 import { PointerLockControls } from 'PointerLockControls';
 import Stats from 'stats';
+import { GLTFLoader } from 'GLTFLoader';
 
 // Scene Initialisation
 console.log("Create the scene");
 const scene = new THREE.Scene();
-scene.background = new THREE.Color( 0xffff );
-scene.fog = new THREE.Fog( 0xffff00, 0, 250 );
+scene.background = new THREE.Color( 0x3333 );
+scene.fog = new THREE.Fog( 0xffff00, 5, 75);
 
 // Camera Initialisation
 console.log("Create the camera");
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.y = 10;
+camera.position.set(0, 0, 25);
 
 // Renderer Initialisation
 console.log("Create the renderer");
@@ -19,6 +20,8 @@ const renderer = new THREE.WebGLRenderer( { antialias: true } );
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(window.devicePixelRatio);
 document.body.appendChild(renderer.domElement);
+// Renderer Lighting Config
+renderer.physicallyCorrectLights = true;
 // Renderer Shadow Config
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -73,10 +76,10 @@ const onKeyDown = function ( event ) {
         case 'KeyD':
             moveRight = true;
             break;
-        case 'KeyQ':
+        case 'KeyE':
             moveUp = true;
             break;
-        case 'KeyE':
+        case 'KeyQ':
             moveDown = true;
             break;
     }
@@ -95,10 +98,10 @@ const onKeyUp = function ( event ) {
         case 'KeyD':
             moveRight = false;
             break;
-        case 'KeyQ':
+        case 'KeyE':
             moveUp = false;
             break;
-        case 'KeyE':
+        case 'KeyQ':
             moveDown = false;
             break;
     }
@@ -119,20 +122,28 @@ document.body.appendChild(stats.dom);
 
 // ** LIGHTING **
 // Ambient Light
-const ambientLight = new THREE.AmbientLight(0x222222);
+const ambientLight = new THREE.AmbientLight(0xffffff, 1);
 scene.add(ambientLight);
 // Sun Light
-const sunLight = new THREE.DirectionalLight(0xffffff, 0.5);
+const sunLight = new THREE.DirectionalLight(0xffffff, 3);
 scene.add(sunLight);
-sunLight.position.set(1, 1, 1)
+sunLight.position.set(100, 100, 100);
+sunLight.castShadow = true;
+sunLight.shadow.mapSize.width = 512;
+sunLight.shadow.mapSize.height = 512;
+sunLight.shadow.camera.near = 0.5;
+sunLight.shadow.camera.far = 500;
+sunLight.shadow.bias = -0.00001;
 
 // ** GEOMETRY **
 // Test Plane Geo
-const testPlaneGeo = new THREE.PlaneGeometry(20, 20, 32, 32);
-const testPlaneMat = new THREE.MeshPhongMaterial({color: 0xffffff});
-const testPlaneMesh = new THREE.Mesh(testPlaneGeo, testPlaneMat);
-scene.add(testPlaneMesh);
-testPlaneMesh.rotation.x = -Math.PI/2;
+// const testPlaneGeo = new THREE.PlaneGeometry(20, 20, 32, 32);
+// const testPlaneMat = new THREE.MeshPhongMaterial({color: 0xffffff});
+// const testPlaneMesh = new THREE.Mesh(testPlaneGeo, testPlaneMat);
+// scene.add(testPlaneMesh);
+// testPlaneMesh.castShadow = true;
+// testPlaneMesh.receiveShadow = true;
+// testPlaneMesh.rotation.x = -Math.PI/2;
 
 // AxesHelper (ADD TO DEBUG MENU)
 const axesHelper = new THREE.AxesHelper(5);
@@ -144,8 +155,10 @@ function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth / window.innerHeight);
+    renderer.render(scene, camera);
 }
 
+// Updates position of the camera based on keyboard input, in regards to delta time.
 let globalUpVector = new THREE.Vector3(0, 1, 0);
 let GlobalUpMovement = new THREE.Vector3(0, 0, 0);
 function updateMovement(deltaTime) {
@@ -164,6 +177,81 @@ function updateMovement(deltaTime) {
         if (moveDown) camera.position.sub(GlobalUpMovement);
     }
 }
+
+// MODEL / TEXTURE LOADING
+const loader = new GLTFLoader();
+loader.load(
+    './src/assets/models/landscape.glb', // Load Landscape
+    function(gltf) {
+        gltf.scene.traverse( function( child ) {
+            if ( child.isMesh ) { 
+                child.castShadow = true;
+                child.receiveShadow = true;
+            }
+        } );
+        scene.add(gltf.scene);
+    }
+);
+loader.load(
+    './src/assets/models/lake.glb', // Load Lake
+    function(gltf) {
+        gltf.scene.traverse( function( child ) {
+            if ( child.isMesh ) { 
+                child.castShadow = true;
+                child.receiveShadow = true;
+            }
+        } );
+        scene.add(gltf.scene);
+    }
+);
+loader.load(
+    './src/assets/models/shrine.glb', // Load Shrine
+    function(gltf) {
+        gltf.scene.traverse( function( child ) {
+            if ( child.isMesh ) { 
+                child.castShadow = true;
+                child.receiveShadow = true;
+            }
+        } );
+        scene.add(gltf.scene);
+    }
+);
+loader.load(
+    './src/assets/models/torii.glb', // Load Torii Gate
+    function(gltf) {
+        gltf.scene.traverse( function( child ) {
+            if ( child.isMesh ) { 
+                child.castShadow = true;
+                child.receiveShadow = true;
+            }
+        } );
+        scene.add(gltf.scene);
+    }
+);
+loader.load(
+    './src/assets/models/ishidoro.glb', // Load Ishidoro (lantern)
+    function(gltf) {
+        gltf.scene.traverse( function( child ) {
+            if ( child.isMesh ) { 
+                child.castShadow = true;
+                child.receiveShadow = true;
+            }
+        } );
+        scene.add(gltf.scene);
+    }
+);
+loader.load(
+    './src/assets/models/steps.glb', // Load Steps
+    function(gltf) {
+        gltf.scene.traverse( function( child ) {
+            if ( child.isMesh ) { 
+                child.castShadow = true;
+                child.receiveShadow = true;
+            }
+        } );
+        scene.add(gltf.scene);
+    }
+);
 
 // GAME LOOP
 console.log("Define animation function");
