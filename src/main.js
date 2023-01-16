@@ -126,12 +126,21 @@ document.body.appendChild(stats.dom);
 
 // ** LIGHTING **
 // Ambient Light
-const ambientLight = new THREE.AmbientLight(0x00ffff, 0.1);
+const ambientLight = new THREE.AmbientLight(0x00ffff, 0.5);
 scene.add(ambientLight);
-// Sun Light
-const moonLight = new THREE.DirectionalLight(0xffffff, 0.5);
+// Moon Light
+const moonGeometry = new THREE.SphereGeometry(10, 32, 32);
+const moonMaterial = new THREE.MeshStandardMaterial({
+    emissive: 0xffffff,
+    emissiveIntensity: 10
+});
+const moonMesh = new THREE.Mesh(moonGeometry, moonMaterial);
+scene.add(moonMesh);
+moonMesh.position.set(200, 150, -300);
+const moonLight = new THREE.DirectionalLight(0xffffff, 3.0);
 scene.add(moonLight);
-moonLight.position.set(10, 10, 10);
+moonLight.parent = moonMesh;
+moonLight.lookAt(0, 0, 0);
 moonLight.castShadow = true;
 moonLight.shadow.mapSize.width = 512;
 moonLight.shadow.mapSize.height = 512;
@@ -192,7 +201,7 @@ const loader = new GLTFLoader();
 loader.load(
     './src/assets/models/landscape.glb', // Load Landscape
     function(gltf) {
-        gltf.scene.traverse( function( child ) {
+        gltf.scene.traverse(function(child) {
             if ( child.isMesh ) { 
                 child.castShadow = true;
                 child.receiveShadow = true;
@@ -204,7 +213,7 @@ loader.load(
 loader.load(
     './src/assets/models/shrine.glb', // Load Shrine
     function(gltf) {
-        gltf.scene.traverse( function( child ) {
+        gltf.scene.traverse(function(child) {
             if ( child.isMesh ) { 
                 child.castShadow = true;
                 child.receiveShadow = true;
@@ -217,7 +226,7 @@ loader.load(
 loader.load(
     './src/assets/models/torii.glb', // Load Torii Gate
     function(gltf) {
-        gltf.scene.traverse( function( child ) {
+        gltf.scene.traverse(function(child) {
             if ( child.isMesh ) { 
                 child.castShadow = true;
                 child.receiveShadow = true;
@@ -229,7 +238,7 @@ loader.load(
 loader.load(
     './src/assets/models/ishidoro.glb', // Load Ishidoro (lantern)
     function(gltf) {
-        gltf.scene.traverse( function( child ) {
+        gltf.scene.traverse(function(child) {
             if ( child.isMesh ) { 
                 child.castShadow = false;
                 child.receiveShadow = true;
@@ -248,7 +257,7 @@ loader.load(
 loader.load(
     './src/assets/models/steps.glb', // Load Steps
     function(gltf) {
-        gltf.scene.traverse( function( child ) {
+        gltf.scene.traverse(function(child) {
             if ( child.isMesh ) { 
                 child.castShadow = true;
                 child.receiveShadow = true;
@@ -257,10 +266,30 @@ loader.load(
         scene.add(gltf.scene);
     }
 );
+let mixer;
 loader.load(
-    './src/assets/models/starry.glb', // Load Steps
+    './src/assets/models/sakura.glb', // Load Sakura Tree
      function(gltf) {
-        gltf.scene.traverse( function( child ) {
+        gltf.scene.traverse(function(child) {
+            if ( child.isMesh ) { 
+                child.castShadow = true;
+                child.material.emissiveIntensity = 1;
+            }
+        });
+        scene.add(gltf.scene);
+
+        // Get & Play Animation
+        mixer = new THREE.AnimationMixer(gltf.scene);
+        console.log(gltf.animations[0]);
+        mixer.clipAction(gltf.animations[0]).play();
+        // TODO: Not a priority, but even though this matches documentation
+        // the animation refuses to play properly. Look into later if time.
+    }
+);
+loader.load(
+    './src/assets/models/starry.glb', // Load Starry Skybox
+     function(gltf) {
+        gltf.scene.traverse(function(child) {
             if ( child.isMesh ) { 
                 child.castShadow = true;
                 child.material.emissiveIntensity = 10;
@@ -273,7 +302,7 @@ loader.load(
 // Lake (with water shader)
 const waterGeometry = new THREE.PlaneGeometry(18.6, 50);
 let water = new Water(waterGeometry, {
-    color: 0xffffff,
+    color: 0xffd949,
     scale: 4.0,
     flowDirection: new THREE.Vector2(1.0, 1.0),
     textureWidth: 1024,
@@ -284,6 +313,27 @@ water.position.z = 15.0;
 water.rotation.x = Math.PI * -0.5;
 scene.add(water);
 
+
+// Fireflies PARTICLES
+const radius = 0.3;
+const wSegments = 6;
+const hSegments = 6;
+const petalParticlesGeometry = new THREE.SphereGeometry(radius, wSegments, hSegments);
+const particlesMaterial = new THREE.PointsMaterial({
+    size: 0.005,
+    sizeAttenuation: false,
+    color: 0xffff00
+});
+const petalParticles = new THREE.Points(petalParticlesGeometry, particlesMaterial);
+petalParticles.position.set(1.5, -2.5, 11.2);
+scene.add(petalParticles);
+const sourcePosBuffer = petalParticles.geometry.attributes.position.array;
+const bufferSize = sourcePosBuffer.length;
+const livePosBuffer = sourcePosBuffer;
+const randOffset = [];
+for (let i = 0; i < bufferSize; ++i) {
+    randOffset[i] = Math.random();
+}
 
 // GAME LOOP
 console.log("Define animation function");
@@ -296,6 +346,20 @@ function animate()
     updateMovement(deltaTime);
     
     stats.update();
+
+    if (mixer) {
+        mixer.update(deltaTime);
+    }
+
+    // Update animation of firefly particles
+    for (let i = 0; i < bufferSize; ++i)
+    {
+        livePosBuffer[i] = sourcePosBuffer[i] + (Math.sin(clock.elapsedTime + randOffset[i]) / 1000);
+        livePosBuffer[i+1] = sourcePosBuffer[i+1] + (Math.cos(clock.elapsedTime + randOffset[i+1]) / 1000);
+        i += 1;
+    }
+    petalParticles.rotateY(5 * deltaTime)
+    petalParticles.geometry.attributes.position.needsUpdate = true;
 
     renderer.render(scene, camera);
 
