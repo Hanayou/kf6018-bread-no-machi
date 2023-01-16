@@ -15,7 +15,7 @@
 				position: absolute;
 				width: 100%;
 				height: 100%;
-				background-color: rgba(0,0,0,0.5);
+				background-color: rgba(0,0,0,0.1);
 			}
 
 			#instructions {
@@ -38,11 +38,16 @@
         <div id="blocker">
 			<div id="instructions">
 				<p style="font-size:36px">
-					Click to play
+					PAUSED
 				</p>
 				<p>
+					CONTROLS<br/>
+					______________<br/><br/>
 					Move: WASD<br/>
-					Look: MOUSE
+					Climb/Descend: QE<br/>
+					Look: MOUSE<br/>
+					Movement Speed: Scroll <br/>
+					Pause: Esc
 				</p>
 			</div>
 		</div>
@@ -61,7 +66,8 @@
 					"RenderPass": "./vendor/three/examples/jsm/postprocessing/RenderPass.js",
 					"UnrealBloomPass": "./vendor/three/examples/jsm/postprocessing/UnrealBloomPass.js",
 					"EffectComposer": "./vendor/three/examples/jsm/postprocessing/EffectComposer.js",
-					"Water": "./vendor/three/examples/jsm/objects/Water2.js"
+					"Water": "./vendor/three/examples/jsm/objects/Water2.js",
+					"GUI": "./vendor/three/examples/jsm/libs/lil-gui.module.min.js"
                 }
             }
         </script>

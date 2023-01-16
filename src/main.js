@@ -6,6 +6,7 @@ import { RenderPass } from 'RenderPass';
 import {UnrealBloomPass} from 'UnrealBloomPass';
 import {EffectComposer} from 'EffectComposer'
 import { Water } from 'Water';
+import { GUI } from 'GUI';
 
 // Scene Initialisation
 console.log("Create the scene");
@@ -43,28 +44,36 @@ let cameraForwardVector = new THREE.Vector3();
 let cameraRightVector = new THREE.Vector3();
 let movementSpeed = 10.0;
 
+let bIsFirstInteraction = true;
+let bIsAudioPlaying = false;
+
 const blocker = document.getElementById( 'blocker' );
 const instructions = document.getElementById( 'instructions' );
 
 instructions.addEventListener( 'click', function () {
-
     controls.lock();
-
-} );
+});
 
 controls.addEventListener( 'lock', function () {
-
     instructions.style.display = 'none';
     blocker.style.display = 'none';
 
-} );
+    if (bIsFirstInteraction || !bIsAudioPlaying) {
+        playAudio();
+        bIsFirstInteraction = false;
+        bIsAudioPlaying = true;
+    }
+});
 
 controls.addEventListener( 'unlock', function () {
-
     blocker.style.display = 'block';
     instructions.style.display = '';
 
-} );
+    if (bIsAudioPlaying) {
+        pauseAudio();
+        bIsAudioPlaying = false;
+    }
+});
 
 const onKeyDown = function ( event ) {
     switch ( event.code ) {
@@ -129,15 +138,18 @@ document.body.appendChild(stats.dom);
 const ambientLight = new THREE.AmbientLight(0x00ffff, 0.5);
 scene.add(ambientLight);
 // Moon Light
-const moonGeometry = new THREE.SphereGeometry(10, 32, 32);
+let moonScale = 10.0;
+const moonGeometry = new THREE.SphereGeometry(1, 32, 32);
 const moonMaterial = new THREE.MeshStandardMaterial({
     emissive: 0xffffff,
-    emissiveIntensity: 10
+    emissiveIntensity: 1.0
 });
 const moonMesh = new THREE.Mesh(moonGeometry, moonMaterial);
 scene.add(moonMesh);
-moonMesh.position.set(200, 150, -300);
-const moonLight = new THREE.DirectionalLight(0xffffff, 3.0);
+moonMesh.position.set(200, 150, -250);
+moonMesh.scale.set(moonScale, moonScale, moonScale);
+let moonLightIntensity = 3.0;
+const moonLight = new THREE.DirectionalLight(0xffffff, moonLightIntensity);
 scene.add(moonLight);
 moonLight.parent = moonMesh;
 moonLight.lookAt(0, 0, 0);
@@ -147,6 +159,10 @@ moonLight.shadow.mapSize.height = 512;
 moonLight.shadow.camera.near = 0.5;
 moonLight.shadow.camera.far = 500;
 moonLight.shadow.bias = -0.00001;
+
+var moonOrigin = new THREE.Object3D();
+scene.add(moonOrigin);
+moonMesh.parent = moonOrigin;
 
 // AxesHelper (ADD TO DEBUG MENU)
 // const axesHelper = new THREE.AxesHelper(5);
@@ -321,7 +337,7 @@ const hSegments = 6;
 const petalParticlesGeometry = new THREE.SphereGeometry(radius, wSegments, hSegments);
 const particlesMaterial = new THREE.PointsMaterial({
     size: 0.005,
-    sizeAttenuation: false,
+    sizeAttenuation: true,
     color: 0xffff00
 });
 const petalParticles = new THREE.Points(petalParticlesGeometry, particlesMaterial);
@@ -334,6 +350,95 @@ const randOffset = [];
 for (let i = 0; i < bufferSize; ++i) {
     randOffset[i] = Math.random();
 }
+
+
+// AUDIO
+const listener = new THREE.AudioListener();
+camera.add(listener);
+
+const waterSound = new THREE.PositionalAudio(listener);
+const windSound = new THREE.Audio(listener);
+const shakuhachiAmbience = new THREE.Audio(listener);
+
+const audioLoader = new THREE.AudioLoader();
+audioLoader.load(
+'./src/assets/sounds/waves.ogg',
+function (buffer) {
+    waterSound.setBuffer(buffer);
+    waterSound.setRefDistance(5);
+    waterSound.setMaxDistance(10);
+    waterSound.setLoop(true);
+    waterSound.setVolume(1.0);
+    water.add(waterSound);
+});
+audioLoader.load(
+    './src/assets/sounds/wind.ogg',
+    function (buffer) {
+        windSound.setBuffer(buffer);
+        windSound.setLoop(true);
+        windSound.setVolume(1.0);
+});
+audioLoader.load(
+    './src/assets/sounds/shakuhachi.ogg',
+    function (buffer) {
+        shakuhachiAmbience.setBuffer(buffer);
+        shakuhachiAmbience.setLoop(true);
+        shakuhachiAmbience.setVolume(1.0);
+});
+    
+
+function playAudio() {
+    console.log("Audio Playing");
+    waterSound.play();
+    //windSound.play();
+    shakuhachiAmbience.play();
+}
+
+function pauseAudio() {
+    console.log("Audio Paused");
+    waterSound.pause();
+    //windSound.pause();
+    shakuhachiAmbience.pause();
+}
+
+let settings;
+function createSettingsPanel() {
+    const panel = new GUI({width: 310});
+    
+    // folders/groups
+    const folder1 = panel.addFolder('Post-processing');
+    const folder2 = panel.addFolder('Lighting');
+
+    settings = {
+        'Bloom': bRendersBloomPass,
+
+        'Moon Size': moonScale,
+        'Moon Colour': moonMesh.material.emissive,
+        'Moon Glow Intensity': moonMesh.material.emissiveIntensity,
+        'Moon Lighting Intensity': moonLightIntensity,
+        'Moon Rotation': moonOrigin.rotation.y
+    };
+
+    folder1.add(settings, 'Bloom').onChange(toggleBloomPass);
+
+    folder2.add(settings, 'Moon Size', 0.0, 100.0, 1.0).listen().onChange(resizeMoon);
+    folder2.addColor(settings, 'Moon Colour').listen().onChange(setMoonColour);
+    folder2.add(settings, 'Moon Glow Intensity', 0.0, 1.0, 0.1).listen().onChange(setMoonGlowIntensity);
+    folder2.add(settings, 'Moon Lighting Intensity', 0.0, 25.0, 1.0).listen().onChange(setMoonLightingIntensity);
+    folder2.add(settings, 'Moon Rotation', 0.0, 359.0, 1.0).listen().onChange(rotateMoonAroundOrigin);
+}
+
+let bRendersBloomPass = true;
+
+function toggleBloomPass(bool) { bRendersBloomPass = bool; }
+
+function resizeMoon(size) { moonMesh.scale.set(size, size, size); }
+function setMoonColour(colour) { moonMesh.material.emissive.set(colour); }
+function setMoonGlowIntensity(intensity) { moonMesh.material.emissiveIntensity = intensity; }
+function setMoonLightingIntensity(intensity) { moonLight.intensity = intensity; }
+function rotateMoonAroundOrigin(rotationDegrees) { moonOrigin.rotation.y = THREE.MathUtils.degToRad(rotationDegrees); }
+
+createSettingsPanel();
 
 // GAME LOOP
 console.log("Define animation function");
@@ -363,6 +468,6 @@ function animate()
 
     renderer.render(scene, camera);
 
-    composer.render();
+    if (bRendersBloomPass) { composer.render(); }
 }
 animate();
