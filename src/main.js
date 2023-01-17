@@ -47,6 +47,8 @@ let movementSpeed = 10.0;
 let bIsFirstInteraction = true;
 let bIsAudioPlaying = false;
 
+
+// Handle pause screen and locked cursor (+ resumption/pausing of music)
 const blocker = document.getElementById( 'blocker' );
 const instructions = document.getElementById( 'instructions' );
 
@@ -316,6 +318,7 @@ loader.load(
 );
 
 // Lake (with water shader)
+// Water implementation adapted from https://github.com/mrdoob/three.js/blob/master/examples/webgl_water.html
 const waterGeometry = new THREE.PlaneGeometry(18.6, 50);
 let water = new Water(waterGeometry, {
     color: 0xffd949,
@@ -334,16 +337,16 @@ scene.add(water);
 const radius = 0.3;
 const wSegments = 6;
 const hSegments = 6;
-const petalParticlesGeometry = new THREE.SphereGeometry(radius, wSegments, hSegments);
+const fireflyParticleGeometry = new THREE.SphereGeometry(radius, wSegments, hSegments);
 const particlesMaterial = new THREE.PointsMaterial({
     size: 0.005,
     sizeAttenuation: true,
     color: 0xffff00
 });
-const petalParticles = new THREE.Points(petalParticlesGeometry, particlesMaterial);
-petalParticles.position.set(1.5, -2.5, 11.2);
-scene.add(petalParticles);
-const sourcePosBuffer = petalParticles.geometry.attributes.position.array;
+const fireflyParticles = new THREE.Points(fireflyParticleGeometry, particlesMaterial);
+fireflyParticles.position.set(1.5, -2.5, 11.2);
+scene.add(fireflyParticles);
+const sourcePosBuffer = fireflyParticles.geometry.attributes.position.array;
 const bufferSize = sourcePosBuffer.length;
 const livePosBuffer = sourcePosBuffer;
 const randOffset = [];
@@ -357,7 +360,6 @@ const listener = new THREE.AudioListener();
 camera.add(listener);
 
 const waterSound = new THREE.PositionalAudio(listener);
-const windSound = new THREE.Audio(listener);
 const shakuhachiAmbience = new THREE.Audio(listener);
 
 const audioLoader = new THREE.AudioLoader();
@@ -372,13 +374,6 @@ function (buffer) {
     water.add(waterSound);
 });
 audioLoader.load(
-    './src/assets/sounds/wind.ogg',
-    function (buffer) {
-        windSound.setBuffer(buffer);
-        windSound.setLoop(true);
-        windSound.setVolume(1.0);
-});
-audioLoader.load(
     './src/assets/sounds/shakuhachi.ogg',
     function (buffer) {
         shakuhachiAmbience.setBuffer(buffer);
@@ -390,14 +385,12 @@ audioLoader.load(
 function playAudio() {
     console.log("Audio Playing");
     waterSound.play();
-    // windSound.play();
     shakuhachiAmbience.play();
 }
 
 function pauseAudio() {
     console.log("Audio Paused");
     waterSound.pause();
-    // windSound.pause();
     shakuhachiAmbience.pause();
 }
 
@@ -463,8 +456,8 @@ function animate()
         livePosBuffer[i+1] = sourcePosBuffer[i+1] + (Math.cos(clock.elapsedTime + randOffset[i+1]) / 1000);
         i += 1;
     }
-    petalParticles.rotateY(5 * deltaTime)
-    petalParticles.geometry.attributes.position.needsUpdate = true;
+    fireflyParticles.rotateY(5 * deltaTime)
+    fireflyParticles.geometry.attributes.position.needsUpdate = true;
 
     renderer.render(scene, camera);
 
