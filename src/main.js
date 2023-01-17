@@ -390,14 +390,14 @@ audioLoader.load(
 function playAudio() {
     console.log("Audio Playing");
     waterSound.play();
-    //windSound.play();
+    // windSound.play();
     shakuhachiAmbience.play();
 }
 
 function pauseAudio() {
     console.log("Audio Paused");
     waterSound.pause();
-    //windSound.pause();
+    // windSound.pause();
     shakuhachiAmbience.pause();
 }
 
